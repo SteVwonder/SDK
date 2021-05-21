@@ -38,43 +38,10 @@ jobs:
           exaworks/sdk-base:latest
         platforms: linux/amd64
 
-    - name: Build RP
-      uses: docker/build-push-action@v2
-      with:
-        context: ./docker/rp
-        push: false
-        load: true
-        platforms: linux/amd64
-        tags: exaworks/rp
-
-    - name: Build Parsl
-      uses: docker/build-push-action@v2
-      with:
-        context: ./docker/Parsl
-        push: false
-        load: true
-        platforms: linux/amd64
-        tags: exaworks/rp_parsl
-        build-args: |
-          BASE_IMAGE=exaworks/rp
-
-    - name: Build Swift
-      uses: docker/build-push-action@v2
-      with:
-        context: ./docker/swift-t
-        push: false
-        load: true
-        platforms: linux/amd64
-        tags: exaworks/rp_parsl_swift
-        build-args: |
-          BASE_IMAGE=exaworks/rp_parsl
-
-    - name: Build Flux
-      uses: docker/build-push-action@v2
-      with:
-        context: ./docker/flux
-        push: true
-        platforms: linux/amd64
-        tags: exaworks/sdk:latest
-        build-args: |
-          BASE_IMAGE=exaworks/rp_parsl_swift
+    - name: Build and push composite image
+      run: |
+        docker build -t rp docker/rp
+        docker build -t rp_parsl --build-arg BASE_IMAGE=rp docker/Parsl
+        docker build -t rp_parsl_swift --build-arg BASE_IMAGE=rp_parsl docker/swift-t
+        docker build -t exaworks/sdk --build-arg BASE_IMAGE=rp_parsl_swift docker/flux
+        docker push exaworks/sdk
